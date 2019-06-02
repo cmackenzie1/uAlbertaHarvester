@@ -1,6 +1,9 @@
 language: java
 jdk:
   - openjdk8
+branches:
+  only:
+    - auto
 before_script:
   - mvn clean package shade:shade
 script:
@@ -8,15 +11,16 @@ script:
 before_deploy:
   - git config --local user.name "builds@travis-ci.com"
   - git config --local user.email "Travis CI"
-  - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)}
+  - export TRAVIS_TAG=${TRAVIS_TAG:-$(date +'%Y%m%d%H%M%SIZE_LIMIT')-$(git log --format=%h -1)}
   - git tag $TRAVIS_TAG
+  - zip -r all.zip uAlbertaHarvesterDump
 deploy:
   provider: releases
   api_key:
     secure: Ydho8YIyfGGY0oYCQkNxkBnS+pGnbTAXNoDEJb15izeNIn+JHgqG5+M8fus5k0GvbbYxRn8S5PETF17RgNNqjAzLdI1+NB5TYnY3J+Crx9t3Zp5XVZlZFMj4N5XBUVtgtSeEvltERYQZ4HzuJfkaMOkfXQ2R/qplcC02u79YZ5ZOjr7TrtMwuHDg4aI6W0GYE3yupIjtNVJJ0hE/7KZl2VMAf5rCPyrZBMgECCvX1G06ERLl5Lp8nsoUYeGFb0j+tt71p1T/ldh5YkgxNFqjUlZMgV6+lANoSdoSS7W5MKz9ZYuxsxNF/jA+c+nmHxgaH+ZPlIi0zAva8CCfbZq8qW1NJYlxiPGF5IlB1RVeIx5OE3qtaUGt3ZMoftyUKNoDKg5hRilHqPHRqeJ4q8+LB1pshq09HL6VIlY6r+SmQuCUUBLULUdKurUIS3craTTYVb0EvAGZvLkAAy8R3sSHkLrXwDwWrU4alfW0IdK0voNvku18YhmY3rJw4Owc5ZJZXvhpHdmCcLA7As3aucHfJnlfyxTy9Fit3qjrI/3XMS0ZqCyFH3H++BmqsW16t7CBP/KW+QMMKbDIC1VoLYLgPBfcWwV9K2823optLAZEyJbVC+TbtjJHTru4yEy+sMnHA/WJ70dXjjGd8aVYtkdSbnCX8E79V7zQloQlwax4fMU=
   file:
-    - terms.json
-    - courses.json
+    - uAlbertaHarvesterDump/*.json
+    - all.zip
   skip_cleanup: true
   overwrite: true
   on:

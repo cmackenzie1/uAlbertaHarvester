@@ -14,107 +14,139 @@
  *    limitations under the License.
  */
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import model.Course;
-import model.Term;
-import org.apache.directory.api.ldap.model.cursor.EntryCursor;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.apache.directory.api.ldap.model.cursor.CursorException;
+import org.apache.directory.api.ldap.model.cursor.SearchCursor;
+import org.apache.directory.api.ldap.model.entry.Attribute;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.api.ldap.model.message.SearchScope;
-import org.apache.directory.ldap.client.api.LdapConnection;
-import org.apache.directory.ldap.client.api.LdapNetworkConnection;
+import org.apache.directory.api.ldap.model.message.*;
+import org.apache.directory.api.ldap.model.name.Dn;
+import org.apache.directory.ldap.client.api.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class Main {
     private static final String LDAP_HOST = "directory.srv.ualberta.ca";
-    private static final String ROOT_DN = "dc=ualberta, dc=ca";
+    private static final String ROOT_DN = "ou=calendar,dc=ualberta,dc=ca";
+    private static final String TERM_QS = "ou=calendar,dc=ualberta,dc=ca";
+    private static final String TERM_FILTER = "(objectclass=uOfATerm)";
+    private static final String COURSE_QS = "term=%s,ou=calendar,dc=ualberta,dc=ca";
+    private static final String COURSE_FILTER = "(objectclass=uOfACourse)";
+    private static final String CLASS_QS = "term=%s,ou=calendar,dc=ualberta,dc=ca";
+    private static final String CLASS_FILTER = "(objectClass=uOfAClass)";
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final int SIZE_LIMIT = 10000;
 
     public static void main(String[] args) {
-        Collection<Term> terms = new ArrayList<>();
-        Collection<Course> courses = new ArrayList<>();
-        LdapConnection connection = new LdapNetworkConnection(LDAP_HOST, 389);
-        try {
-            log.info("Attempting to connect");
-            connection.bind();
-            assert connection.isConnected();
-            log.info("Connection successful");
+        ArrayNode terms;
+        ArrayNode courses;
 
+        LdapConnectionConfig config = new LdapConnectionConfig();
+        config.setLdapHost(LDAP_HOST);
+        config.setLdapPort(389);
+        DefaultLdapConnectionFactory factory = new DefaultLdapConnectionFactory(config);
+        factory.setTimeOut(3000);
+        GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
+        LdapConnectionPool ldapConnectionPool = new LdapConnectionPool(
+                new DefaultPoolableLdapConnectionFactory(factory), poolConfig);
+
+        try {
             // Terms
-            log.info("Querying Terms...");
-            queryTerms(terms, connection);
-            log.info("Done Querying Terms...");
+            terms = query(ldapConnectionPool, TERM_QS, TERM_FILTER, SearchScope.ONELEVEL);
+            log.info("Collected {} terms", terms.size());
+            writeToJson(Paths.get("uAlbertaHarvesterDump/terms.json"), terms);
 
             // Courses
-            log.info("Querying Courses...");
-            for (Term term : terms) {
-                queryCourses(courses, term.getTerm(), connection);
+            courses = objectMapper.createArrayNode();
+            for (JsonNode term : terms) {
+                String qs = String.format(COURSE_QS, term.get("term"));
+                courses.addAll(query(ldapConnectionPool, qs, COURSE_FILTER, SearchScope.ONELEVEL));
             }
-            log.info("Done Querying Courses...");
+            log.info("Collected {} courses", courses.size());
+            writeToJson(Paths.get("uAlbertaHarvesterDump/courses.json"), courses);
 
-            connection.close();
+            // Classes
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
 
-            writeToJson(Paths.get("terms.json"), terms);
-            writeToJson(Paths.get("courses.json"), courses);
+            for (JsonNode term : terms) {
+                executorService.submit(() -> {
+                    String qs = String.format(CLASS_QS, term.get("term"));
+                    try {
+                        ArrayNode nodes = query(ldapConnectionPool, qs, CLASS_FILTER, SearchScope.SUBTREE);
+                        log.info("Done executing term={} classes_found={}", term.get("term"), nodes.size());
+                        writeToJson(Paths.get("uAlbertaHarvesterDump/classes/" + term.get("term").asText() + ".json"), nodes);
+                    } catch (CursorException | IOException | LdapException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
 
+            executorService.shutdown();
+            try {
+                executorService.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+                e.printStackTrace();
+            }
         } catch (LdapException e) {
             e.printStackTrace();
             System.exit(1);
-        } catch (IOException e) {
+        } catch (IOException | CursorException e) {
             e.printStackTrace();
         }
         System.exit(0);
     }
 
-    private static void queryCourses(Collection<Course> courses, String term, LdapConnection connection) throws LdapException {
-        String qs = String.format("term=%s,ou=calendar,dc=ualberta,dc=ca", term);
-        EntryCursor cursor = connection.search(qs, "(objectclass=uOfACourse)", SearchScope.ONELEVEL);
-        for (Entry entry : cursor) {
-            log.debug(entry.toString());
-            Course course = Course.builder()
-                    .term_id(Integer.parseInt(entry.get("term").getString()))
-                    .course_id(entry.get("course").getString())
-                    .subject(entry.get("subject").getString())
-                    .subjectTitle(entry.get("subjectTitle").getString())
-                    .course(entry.get("courseTitle").getString())
-                    .catalog(entry.get("catalog").getString())
-                    .faculty(entry.get("faculty").getString())
-                    .department(entry.get("department").getString())
-                    .build();
-            try {
-                course.setDescription(entry.get("courseDescription").getString());
-            } catch (NullPointerException e) {
-                course.setDescription("");
+    private static ArrayNode query(LdapConnectionPool connectionPool, String qs, String filter, SearchScope scope) throws LdapException, IOException, CursorException {
+        // Build Request
+        log.info("Executing qs=" + qs);
+        SearchRequest searchRequest = new SearchRequestImpl();
+        searchRequest.setBase(new Dn(qs));
+        searchRequest.setFilter(filter);
+        searchRequest.setScope(scope);
+        searchRequest.setSizeLimit(SIZE_LIMIT);
+
+        // Get Connection
+        LdapConnection connection = connectionPool.getConnection();
+
+        // Execute
+        SearchCursor searchCursor = connection.search(searchRequest);
+        ArrayNode arrayNode = objectMapper.createArrayNode();
+        while (searchCursor.next()) {
+            Response response = searchCursor.get();
+            if (response instanceof SearchResultEntry) {
+                Entry resultEntry = ((SearchResultEntry) response).getEntry();
+                JsonNode node = objectMapper.createObjectNode();
+                for (Attribute attribute : resultEntry.getAttributes()) {
+                    ((ObjectNode) node).put(attribute.getId(), attribute.getString());
+                }
+                arrayNode.add(node);
             }
-            courses.add(course);
         }
+        // Cleanup
+        searchCursor.close(); // gotta plug those leaks
+        connectionPool.releaseConnection(connection);
+        return arrayNode;
     }
 
-    private static void queryTerms(Collection<Term> terms, LdapConnection connection) throws LdapException {
-        String qs = String.format("ou=calendar,dc=ualberta,dc=ca");
-        EntryCursor cursor = connection.search(qs, "(objectclass=uOfATerm)", SearchScope.ONELEVEL);
-        for (Entry entry : cursor) {
-            terms.add(new Term(
-                    entry.get("term").getString(),
-                    entry.get("termTitle").getString(),
-                    entry.get("startDate").getString(),
-                    entry.get("endDate").getString()
-            ));
-        }
-    }
-
-    private static void writeToJson(Path path, Collection collection) throws IOException {
-        log.info("Dumping " + path.toString());
+    private static void writeToJson(Path path, ArrayNode arrayNode) throws IOException {
+        log.info("Writing " + path.toString());
+        path.toFile().getParentFile().mkdirs();
         OutputStream outputStream = new FileOutputStream(path.toFile());
-        objectMapper.writeValue(outputStream, collection);
+        objectMapper.writeValue(outputStream, arrayNode);
     }
 }
