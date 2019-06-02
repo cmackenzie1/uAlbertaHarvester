@@ -1,7 +1,9 @@
 # uAlbertaHarvester
 A small Java project used to scrape the University of Alberta LDAP Server for info.
 
-Auto Scrape Status: ![Image](https://travis-ci.org/cmackenzie1/uAlbertaHarvester.svg?branch=auto)
+**Auto Scrape Status**: ![Image](https://travis-ci.org/cmackenzie1/uAlbertaHarvester.svg?branch=auto)
+
+**Keywords**: ualberta, university of alberta, course listings, catalog, calendar
 
 ## Downloads
 |Name|Description|Size (Approx.)|Link|
@@ -21,10 +23,11 @@ java -jar target/ualberta-harvester-1.0-SNAPSHOT.jar
 ```json
 [
     {
-      "term": "1420",
-      "termTitle": "Winter Term 2013",
-      "startDate": "2013-01-07",
-      "endDate": "2013-04-12"
+      "enddate": "2020-04-08",
+      "term": "1700",
+      "startdate": "2020-01-06",
+      "objectclass": "uOfATerm",
+      "termtitle": "Winter Term 2020"
     }
 ]
 ```
@@ -33,19 +36,55 @@ java -jar target/ualberta-harvester-1.0-SNAPSHOT.jar
 ```json
 [
     {
-      "term_id": 1400,
-      "course_id": "000037",
-      "subject": "ACCTG",
-      "subjectTitle": "Accounting",
-      "course": "Seminar in Management Accounting",
-      "catalog": "624",
-      "description": "Seminar consisting of topics concerned at an advanced level with generating and using accounting and related data in the planning and control functions of organizations. Prerequisite: ACCTG 523.",
-      "faculty": "Faculty of Business",
-      "department": "Department of Accounting, Operations and Information Systems"
+      "subjecttitle": "Interdisciplinary Undergraduate & Graduate Courses",
+      "career": "UGRD",
+      "subject": "INT D",
+      "catalog": "225",
+      "units": "3.00",
+      "coursetitle": "INTERDISCIPLINARY STUDIES",
+      "objectclass": "uOfACourse",
+      "facultycode": "AR",
+      "faculty": "Faculty of Arts",
+      "asstring": "INT D 225",
+      "course": "107763",
+      "departmentcode": "INT D",
+      "term": "1700",
+      "department": "Office of Interdisciplinary Studies"
     }
 ]
 ```
 
+### `classes.json`
+```json
+[
+  {
+    "campus": "OFF",
+    "session": "Regular Academic Session",
+    "classtype": "E",
+    "section": "850",
+    "classnotes": "Class taught Jan 13 - March 18 in Italy. Restricted to students in the Cortona program.  Contact the Faculty of Arts at <a href=\"https://www.ualberta.ca/arts/programs/study-abroad/school-in-cortona\" target=_blank>uab.ca/cortona</a> for registration assistance. Closed to web registration. Permission is required to drop this class. Please contact cortona@ualberta.ca for assistance. This section is offered in a Cost Recovery format at an increased rate of fee assessment.",
+    "units": "3.00",
+    "consent": "Department Consent",
+    "startdate": "2020-01-13",
+    "objectclass": "uOfAClass",
+    "capacity": "34",
+    "classtopic": "Critical Thinking, Creativity and Complexity",
+    "asstring": "INT D 225 LEC 850",
+    "enrollstatus": "O",
+    "component": "LEC",
+    "enddate": "2020-03-18",
+    "gradingbasis": "Graded",
+    "instructionmode": "In Person",
+    "classstatus": "A",
+    "course": "107763",
+    "term": "1700",
+    "location": "CORTONA",
+    "class": "97051"
+  }
+]
+```
+
 ## Resources and Acknowledgements
+* [Apache Directory](http://directory.apache.org/)
 * [uAlberta Open Data API](https://sites.google.com/a/ualberta.ca/open-data/home)
 * Inspired by: [https://github.com/ChrisChrisLoLo/courseLdapScraper](https://github.com/ChrisChrisLoLo/courseLdapScraper)
