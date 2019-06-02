@@ -21,3 +21,4 @@ deploy:
   overwrite: true
   on:
     branch: auto
+    tags: false
