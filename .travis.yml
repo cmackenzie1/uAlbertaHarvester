@@ -19,3 +19,5 @@ deploy:
     - courses.json
   skip_cleanup: true
   overwrite: true
+  on:
+    branch: auto
