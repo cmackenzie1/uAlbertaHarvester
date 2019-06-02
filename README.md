@@ -1,6 +1,10 @@
 # uAlbertaHarvester
 A small Java project used to scrape the University of Alberta LDAP Server for info.
 
+Auto Scrape Status: ![Image](https://travis-ci.org/cmackenzie1/uAlbertaHarvester.svg?branch=auto)
+
+**Checkout the releases tab for the latest JSON's :)**
+
 ## Add support for
 * ~~Terms~~
 * ~~Courses~~
