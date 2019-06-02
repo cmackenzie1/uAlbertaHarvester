@@ -97,7 +97,7 @@ public class Main {
 
             executorService.shutdown();
             try {
-                executorService.awaitTermination(10, TimeUnit.SECONDS);
+                executorService.awaitTermination(5, TimeUnit.MINUTES);
             } catch (InterruptedException e) {
                 executorService.shutdownNow();
                 e.printStackTrace();
