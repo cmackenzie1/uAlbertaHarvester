@@ -79,7 +79,7 @@ public class Main {
         String qs = String.format("term=%s,ou=calendar,dc=ualberta,dc=ca", term);
         EntryCursor cursor = connection.search(qs, "(objectclass=uOfACourse)", SearchScope.ONELEVEL);
         for (Entry entry : cursor) {
-            log.info(entry.toString());
+            log.debug(entry.toString());
             Course course = Course.builder()
                     .term_id(Integer.parseInt(entry.get("term").getString()))
                     .course_id(entry.get("course").getString())
