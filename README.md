@@ -7,8 +7,8 @@ Auto Scrape Status: ![Image](https://travis-ci.org/cmackenzie1/uAlbertaHarvester
 |Name|Description|Size (Approx.)|Link|
 |----|----|----|----|
 |Terms|A collection of all the terms listed at the UofA|<1 MB|[terms.json](https://github.com/cmackenzie1/uAlbertaHarvester/releases/latest/download/terms.json)|
-|Courses|A collection of all the courses listed at the UofA|~11 MB|[courses.json](https://github.com/cmackenzie1/uAlbertaHarvester/releases/latest/download/courses.json)|
-|Classes|A collection of all the classes listed at the UofA|~100 MB|[classes.json](https://github.com/cmackenzie1/uAlbertaHarvester/releases/latest/download/classes.json)|
+|Courses|A collection of all the courses listed at the UofA|~50 MB|[courses.json](https://github.com/cmackenzie1/uAlbertaHarvester/releases/latest/download/courses.json)|
+|Classes|A collection of all the classes listed at the UofA|~120 MB|[classes.json](https://github.com/cmackenzie1/uAlbertaHarvester/releases/latest/download/classes.json)|
 
 ## Instructions
 ```bash
