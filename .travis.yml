@@ -15,8 +15,8 @@ before_deploy:
   - git config --local user.email "Travis CI"
   - export TRAVIS_TAG=$(date +'%Y%m%d%H%M')-$(git log --format=%h -1)
   - git tag $TRAVIS_TAG
-  - zip -r all.zip uAlbertaHarvesterDump
   - jq -s '.|add' uAlbertaHarvesterDump/classes/*.json > uAlbertaHarvesterDump/classes.json
+  - zip -r all.zip uAlbertaHarvesterDump
 deploy:
   provider: releases
   api_key:
