@@ -202,3 +202,4 @@ gradle-app.setting
 **/build/
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij+all,maven,gradle,macos,linux,windows,vscode
+/uAlbertaHarvesterDump/
