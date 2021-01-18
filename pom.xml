@@ -29,7 +29,7 @@
         <jackson.version>2.9.9</jackson.version>
         <mvn.jar.plugin.version>3.0.2</mvn.jar.plugin.version>
         <shade.version>3.2.1</shade.version>
-        <log4j.version>2.7</log4j.version>
+        <log4j.version>2.14.0</log4j.version>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
     </properties>
